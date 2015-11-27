@@ -63,7 +63,6 @@ if ~exist(saverespath, 'file')
     opts.det.path_format = LOCAl_SAVE_DET_FORMAT;
     opts.im_path_format = im_format;
     opts.im_set = test_set;
-    opts.viz.doviz = false;
     
     %regressed version
     opts.regression.param = [0.000500595642863 -0.00649301373331 0.975682458365 0.982287603066];
@@ -105,15 +104,46 @@ disp(['> Evaluating model: ' modelname]);
 saverespath = fullfile(RES_ROOT, [modelname '.mat']);
 
 if ~exist(saverespath, 'file')
+    %load non-regressed local detections
+    local_model_nonreg_save_path = fullfile(RES_ROOT, 'Local_model_nonreg.mat');
+    if ~exist(local_model_nonreg_save_path, 'file')
+        opts = struct;
+        opts.im_path_format = im_format;
+        opts.im_set = test_set;
+        opts.det.scoretype = 'raw';
+        opts.regression.param =  [0 0 1 1];
+        opts.det.modeltype = 'local';
+        opts.det.path_format = LOCAl_SAVE_DET_FORMAT;
+        det = load_det(opts);
+        save(local_model_nonreg_save_path, 'det');
+        clear det;
+    end
+    
+    %load non-regressed pairwise detections
+    pairwise_model_nonreg_save_path = fullfile(RES_ROOT, 'Pairwise_model_nonreg.mat');
+    if ~exist(pairwise_model_nonreg_save_path, 'file')
+        opts = struct;
+        opts.im_path_format = im_format;
+        opts.im_set = test_set;
+        opts.det.scoretype = 'raw';
+        opts.regression.param =  [0 0 1 1];
+        opts.det.modeltype = 'pairwise';
+        opts.det.path_format = PAIRWISE_SAVE_DET_FORMAT;
+        det = load_det(opts);
+        save(pairwise_model_nonreg_save_path, 'det');
+        clear det;
+    end
+    
+    %combined detections
     opts = struct;
-    opts.local_res_path = fullfile(RES_ROOT, 'Local_model.mat');
-    opts.pairwise_res_path = fullfile(RES_ROOT, 'Pairwise_model.mat');
+    opts.local_res_path = local_model_nonreg_save_path;
+    opts.pairwise_res_path = pairwise_model_nonreg_save_path;
     opts.im_path_format = im_format;
     opts.im_set = test_set;
     opts.regression.param = [0.000500595642863 -0.00649301373331 0.975682458365 0.982287603066];
     
-    opts.ialpha = 3;
-    opts.ibias = 7;
+    opts.ialpha = 5;
+    opts.ibias = 9;
     
     opts.global.alpha = 0.30;
     opts.global.path_format = GLOBAL_SAVE_DET_FORMAT;
@@ -131,7 +161,7 @@ end
 modelname = 'RCNN';
 disp(['> Evaluating model: ' modelname]);
 saverespath = fullfile(RES_ROOT, [modelname '.mat']);
-if (exist(saverespath, 'file') == 0)
+if ~exist(saverespath, 'file')
     opts = struct;
     opts.regression.param = [-0.00239252348267 -0.017133841922 0.975428819577 0.958512960492];
     opts.det.modeltype = 'rcnn_svm';
@@ -151,7 +181,7 @@ end
 modelname = 'DPM';
 disp(['> Evaluating model: ' modelname]);
 saverespath = fullfile(RES_ROOT, [modelname '.mat']);
-if (exist(saverespath, 'file') == 0)
+if ~exist(saverespath, 'file')
     opts = struct;
     opts.regression.param = [-0.0110632673917 -0.154468706569 1.17615081441 1.32509178499];
     opts.det.modeltype = 'dpm';

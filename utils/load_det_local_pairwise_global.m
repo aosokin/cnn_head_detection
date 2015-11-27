@@ -1,4 +1,7 @@
 function det = load_det_local_pairwise_global(varargin)
+% Combine detection results of local, pairwise and global models
+
+opts = struct;
 opts.alpha_pairwise_range = 0.9:-0.1:0.1;
 opts.bias_range = 10:-1:-10;
 opts.local_res_path = '';
@@ -49,15 +52,30 @@ bias = opts.bias_range(opts.ibias);
 DET = [];
 N_img = length(det_lcl);
 
-fprintf('Loading detections\n');
+fprintf('Combining detections\n');
 progress_part_num = ceil(N_img/opts.progress_part);
 
 for i=1:N_img
+    if (opts.verbose)
+        if (i==N_img)
+            fprintf('...100%%\n');
+        else
+            if ~mod(i,progress_part_num)
+                fprintf('...%d%%', i*100/(progress_part_num*opts.progress_part));
+            end
+        end
+    end
     d1 = det_lcl(i).bb(:,1:5);
     d2 = det_pw(i).bb(:,1:5);
     
-    d_c = d1;
-    d_c(1:size(d2,1), 5) =  d1(1:size(d2,1), 5)*(1-alpha_pairwise) + d2(:,5)*alpha_pairwise + bias;
+    dist = pdist2(d1(:,1:4), d2(:,1:4));
+    [~,m_i] = min(dist);
+    
+    d_c = zeros(size(d1));
+    d_c(1:size(d2,1), 1:4) = d1(m_i, 1:4);
+    d_c(1:size(d2,1), 5) =  d1(m_i, 5)*(1-alpha_pairwise) + d2(:,5)*alpha_pairwise + bias;
+    
+    d_c(size(d2,1)+1:size(d1,1),:) = d1(setdiff(1:size(d1,1), m_i), :);
     
     det(i) = det_lcl(i);
     det(i).bb = d_c;
