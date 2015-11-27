@@ -12,14 +12,15 @@ Our paper is available as [arXiv tech report](http://arxiv.org/abs/1511.07917). 
 
 Our code is released under the MIT License (refer to the LICENSE file for details).
 
-### Citing 
+### Cite
 
 If you find our code useful in your research, please, consider citing our paper:
-    @inproceedings{vu15heads,
-        Author = {Vu, Tuan{-}Hung and Osokin, Anton and Laptev, Ivan},
-        Title = {Context-aware {CNNs} for person head detection},
-        Booktitle = {International Conference on Computer Vision ({ICCV})},
-        Year = {2015} }
+
+>@inproceedings{vu15heads,<br>
+    Author = {Vu, Tuan{-}Hung and Osokin, Anton and Laptev, Ivan},<br>
+    Title = {Context-aware {CNNs} for person head detection},<br>
+    Booktitle = {International Conference on Computer Vision ({ICCV})},<br>
+    Year = {2015} }
 
 ### Contents
 1. [Requirements](#requirements)
