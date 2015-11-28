@@ -42,11 +42,16 @@ opts_cnn.scoreMode = 'beforeSoftMax'; % 'beforeSoftMax' or 'afterSoftMax' or 'sc
 opts_cnn.imdbPath = fullfile(opts_cnn.expDir, 'imdb.mat');
 generateDataFlag = true;
 if exist(opts_cnn.imdbPath, 'file')
-    fprintf('Reading the prepared dataset file\n');
+    fprintf('Reading imdb file %s\n', opts_cnn.imdbPath);
     imdb = load(opts_cnn.imdbPath);
+    if isfield(imdb, 'opts') && isequal( imdb.opts, opts_cnn.dataset )
+        fprintf('imdb.opts is compatible with the opt_cnn.dataset\n')
+    else
+        warning('opts_cnn.dataset parameters are not compatible with the provided imdb file. Be careful!');
+    end
 else
-    warning('Dataset can not be found need to recompute!');
-    fprintf('Preparing the dataset\n');
+    warning('imdb file is not found. Making it will take some time.');
+    fprintf('Generating imdb file %s\n', opts_cnn.imdbPath);
     imdb = cnn_prepareData_localModel( opts_cnn.dataset, 'dataPath', opts_cnn.dataPath );
     imdb.opts = opts_cnn.dataset;
     mkdir(opts_cnn.expDir);

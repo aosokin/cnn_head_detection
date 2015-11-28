@@ -29,7 +29,7 @@ nBatch = ceil(numImages/opts.batchSize);
 for iBatch = 1 : nBatch
     batchid = (iBatch-1)*opts.batchSize+1:min(iBatch*opts.batchSize, numImages);
     batch = opts.imageSet(batchid);
-    fprintf('Working with batch %d of %d:\n ', iBatch, nBatch);
+    fprintf('Working with batch %d of %d: ', iBatch, nBatch);
 
     [im, labels] = getBatch( imdb, batch );
     
@@ -53,7 +53,7 @@ for iBatch = 1 : nBatch
         %save_path = sprintf(opts.detSavePathFormat, f_name);
         %save(save_path, 'score');
     end
-    fprintf('forward: %fs\n', toc(tBatchStart) );
+    fprintf('time: %fs\n', toc(tBatchStart) );
 end
 
 

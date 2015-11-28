@@ -68,17 +68,17 @@ end
 %% Prepare data
 generateDataFlag = true;
 if exist(opts.imdbPath, 'file')
-    fprintf('Reading the prepared dataset file\n');
+    fprintf('Reading imdb file %s\n', opts.imdbPath);
     imdb = load(opts.imdbPath);
     if isfield(imdb, 'opts') && isequal( imdb.opts, opts.dataset )
         generateDataFlag = false;
     else
         generateDataFlag = true;
-        warning('Dataset parameters are not consistent with the file, need to regenerate');
+        warning('imdb file is not consistent with the parameters, need to generate it again');
     end
 end
 if generateDataFlag
-    fprintf('Preparing the dataset\n');
+    fprintf('Generating imdb file %s\n', opts.imdbPath);
     imdb = cnn_prepareData_pairwiseModel( opts.dataset, 'dataPath', opts.dataPath );
     imdb.opts = opts.dataset;
     mkdir(opts.expDir);
