@@ -66,6 +66,12 @@ end
 
 % read other data
 input_size = size(opts.meanImage, 1);
+for n_tile=opts.grid_size
+    tile_size = input_size/n_tile;
+    stride = tile_size/opts.nstride;
+    n_tile_strided{n_tile} = floor((input_size-stride)/stride);
+end
+
 for iImage = 1 : numImages
     GT = imdb.groundTruth{ batch(iImage) };
 
@@ -74,10 +80,6 @@ for iImage = 1 : numImages
     GT_pad = GT_pad*scale_factor(iImage);
     
     for n_tile=opts.grid_size
-        tile_size = input_size/n_tile;
-        stride = tile_size/opts.nstride;
-
-        n_tile_strided{n_tile} = floor((input_size-stride)/stride);
         hm{n_tile} = 2*ones(n_tile_strided{n_tile});
     end
 
@@ -100,18 +102,10 @@ for iImage = 1 : numImages
             cell_c_br = floor((GT_pad(GT_cnt, 3)-1)/stride);
             cell_d_br = floor((GT_pad(GT_cnt, 4)-1)/stride);
 
-            if (cell_c_tl <= 0)
-                cell_c_tl = 1;
-            end
-            if (cell_d_tl <= 0)
-                cell_d_tl = 1;
-            end
-            if (cell_c_br <= 0)
-                cell_c_br = 1;
-            end
-            if (cell_d_br <= 0)
-                cell_d_br = 1;
-            end
+            cell_c_tl = min(max(1, cell_c_tl), n_tile_strided{n_tile});
+            cell_d_tl = min(max(1, cell_d_tl), n_tile_strided{n_tile});
+            cell_c_br = min(max(1, cell_c_br), n_tile_strided{n_tile});
+            cell_d_br = min(max(1, cell_d_br), n_tile_strided{n_tile});
 
             max_ov = -inf;
             max_c = 0;
@@ -148,7 +142,7 @@ for iImage = 1 : numImages
    end
 
 
-   output = ones(sum(opts.grid_size.^2), 1)*2;
+   output = [];
    cnt = 0;
    for n_tile=opts.grid_size
        output(cnt+1:cnt+n_tile_strided{n_tile}^2) = reshape(hm{n_tile}, 1, n_tile_strided{n_tile}^2);

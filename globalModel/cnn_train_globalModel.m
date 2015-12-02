@@ -66,6 +66,7 @@ info.train.objective = [] ;
 info.train.error = [] ;
 info.train.speed = [] ;
 info.train.datasetSize = numel(opts.train);
+info.train.xPos = [];
 info.val.objective = [] ;
 info.val.error = [] ;
 info.val.speed = [] ;
@@ -79,7 +80,7 @@ if ~isnan( opts.numValidationPerEpoch )
     fprintf('Validation will be performed %d times each training epoch\n', length(validationBatches) );
 end
 
-modelPath = fullfile(opts.expDir, 'net-epoch-%d.mat') ;
+modelPath = fullfile(opts.expDir, 'net-epoch-%d-%d.mat') ;
 if ~isnan(opts.restartEpoch)
     if ~exist(sprintf(modelPath, opts.restartEpoch),'file')
         opts.restartEpoch = nan;
@@ -96,23 +97,22 @@ for epoch=1:opts.numEpochs
     lr = opts.learningRate(min(epoch, numel(opts.learningRate))) ;
     
     % fast-forward to where we stopped
-    modelPath = @(ep) fullfile(opts.expDir, sprintf('net-epoch-%d.mat', ep));
+    modelPath = @(ep, number) fullfile(opts.expDir, sprintf('net-epoch-%d-%d.mat', ep, number));
     modelFigPath = fullfile(opts.expDir, 'net-train.pdf') ;
     
-%     start_t = 1;
     if opts.continue && ~flagStartedTraining
         % check if can fast forward to the target epoch
         if ~isnan(opts.restartEpoch) && epoch <= opts.restartEpoch
-            if exist( modelPath(opts.restartEpoch),'file')
+            if exist( modelPath(opts.restartEpoch, opts.numValidationPerEpoch),'file')
                 continue;
             end
-        elseif exist( modelPath( epoch ),'file' )
+        elseif exist( modelPath( epoch, opts.numValidationPerEpoch ),'file' )
             continue;
         end
         
         if epoch > 1
             fprintf('resuming by loading epoch %d\n', epoch-1) ;
-            load(modelPath(epoch-1), 'net', 'info') ;
+            load(modelPath(epoch-1, opts.numValidationPerEpoch), 'net', 'info') ;
         end
     end
     flagStartedTraining = true;
@@ -120,7 +120,6 @@ for epoch=1:opts.numEpochs
     
     train = opts.train(randperm(numel(opts.train))) ;
     
-%     if (start_t == 1)
     info.train.objective(end+1) = 0 ;
     info.train.error(end+1) = 0 ;
     info.train.speed(end+1) = 0 ;
@@ -139,9 +138,7 @@ for epoch=1:opts.numEpochs
     
     
     numTrain = 0;
-%     end
-%     for t=start_t:opts.batchSize:numel(train)
-
+    numSavedModels = 0;
     for t=1:opts.batchSize:numel(train)
         % get next image batch and labels
         batch = train(t:min(t+opts.batchSize-1, numel(train))) ;
@@ -182,7 +179,7 @@ for epoch=1:opts.numEpochs
         % print information
         batch_time = toc(batch_time) ;
         speed = batchSize/batch_time ;
-        info.train = updateError(opts, info.train, net, res, batch_time) ;
+        info.train = updateError(info.train, labels, res, batch_time) ;
         
         fprintf(' %.2f s (%.1f images/s)', batch_time, speed) ;
         fprintf(' err %.3f loss %.3f ', info.train.error(end)/numTrain*100,  sum(double(gather(res(end).x))));
@@ -198,19 +195,11 @@ for epoch=1:opts.numEpochs
             
             info = evaluateValidationSet( opts, imdb, net, epoch, info, getBatch, res  );
 
-            % save network
-            partid = (t - 1) / opts.batchSize + 1;
-            save([modelPath(epoch) '.part' num2str(partid)], 'net', 'info') ;
+            % save the intermediate model
+            save(modelPath(epoch, numSavedModels + 1), 'net', 'info') ;
+            numSavedModels = numSavedModels + 1;
             
-            figure(1) ; clf ;
-            plot(info.val.xPos, info.val.error, 'b') ;
-            h=legend('train','val') ;
-            grid on ;
-            xlabel('training epoch') ; ylabel('error') ;
-            set(h,'color','none') ;
-            title('error') ;
-            drawnow ;
-            print(1, modelFigPath, '-dpdf') ;
+            makePlots(info, modelFigPath);
         end
 
     end % next batch
@@ -219,31 +208,12 @@ for epoch=1:opts.numEpochs
     info.train.objective(end) = info.train.objective(end) / numTrain ;
     info.train.error(end) = info.train.error(end) / numTrain  ;
     info.train.speed(end) = numTrain / info.train.speed(end) ;
-    save(modelPath(epoch), 'net', 'info') ;
+    if numSavedModels == 0
+        numSavedModels = numSavedModels + 1;
+    end
+    save(modelPath(epoch, numSavedModels), 'net', 'info') ;
     
-    figure(1) ; clf ;
-    subplot(1,2,1) ;
-    semilogy(1:epoch, info.train.objective, 'k') ; hold on ;
-    semilogy( info.val.xPos, info.val.objective, 'b') ;
-    xlabel('training epoch') ; ylabel('energy') ;
-    grid on ;
-    h=legend('train', 'val') ;
-    set(h,'color','none');
-    title('objective') ;
-    subplot(1,2,2) ;
-    
-    plot(1:epoch, info.train.error, 'k') ; hold on ;
-    plot(info.val.xPos, info.val.error, 'b') ;
-    h=legend('train','val') ;
-    
-    grid on ;
-    xlabel('training epoch') ; ylabel('error') ;
-    set(h,'color','none') ;
-    title('error') ;
-    drawnow ;
-    print(1, modelFigPath, '-dpdf') ;
-    
-    break;
+    makePlots(info, modelFigPath);
 end
 
 % save final model
@@ -260,14 +230,34 @@ save( fullfile( opts.expDir, 'global.mat' ), '-struct', 'net', '-v7.3' );
 
 end
 
+function makePlots(info, modelFigPath)
+figure(1) ; clf ;
+subplot(1,2,1) ;
+semilogy(info.train.xPos, info.train.objective(1:numel(info.train.xPos)), 'k') ; hold on ;
+semilogy(info.val.xPos, info.val.objective(1:numel(info.val.xPos)), 'b') ;
+xlabel('training epoch') ; ylabel('energy') ;
+grid on ;
+h=legend('train', 'val') ;
+set(h,'color','none');
+title('objective') ;
 
+subplot(1,2,2) ;
+plot(info.train.xPos, info.train.error(1:numel(info.train.xPos)), 'k') ; hold on ;
+plot(info.val.xPos, info.val.error(1:numel(info.val.xPos)), 'b') ;
+h=legend('train','val') ;
+grid on ;
+xlabel('training epoch') ; ylabel('error') ;
+set(h,'color','none') ;
+title('error') ;
+drawnow ;
+print(1, modelFigPath, '-dpdf') ;
+end
 
-function info = updateError(opts, info, net, res, speed)
+function info = updateError(info, labels, res, speed)
 predictions = gather(res(end-1).x) ;
 sz = size(predictions) ;
 n = prod(sz(1:2)) ;
 
-labels = net.layers{end}.class ;
 info.objective(end) = info.objective(end) + sum(double(gather(res(end).x))) ;
 info.speed(end) = info.speed(end) + speed ;
 
@@ -306,7 +296,7 @@ for t=1:opts.batchSize:numel(val)
     % print information
     batch_time = toc(batch_time) ;
     speed = batchSize/batch_time ;
-    info.val = updateError(opts, info.val, net, res, batch_time) ;
+    info.val = updateError(info.val, labels, res, batch_time) ;
     
     fprintf(' %.2f s (%.1f images/s)', batch_time, speed) ;
     n = numVal;
