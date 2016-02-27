@@ -27,6 +27,8 @@ If you find our code useful in your research, please, consider citing our paper:
 2. [Demo](#demo)
 3. [Evaluation](#evaluation)
 4. [Training](#training)
+4. [Casablanca dataset](#casablanca-dataset)
+
 
 ### Requirements
 To run the demo you just need MATLAB installed.
@@ -36,6 +38,8 @@ We also recommend using [cuDNN](https://developer.nvidia.com/cudnn) for better p
 
 The code was tested on Ubuntu 12.04 LTS with MATLAB-2014b, CUDA 7.0, cudnn-7.0-linux-x64-v3.0, and NVIDIA TITAN X.
 We used [MatConvNet v1.0-beta12](https://github.com/vlfeat/matconvnet/archive/v1.0-beta12.zip).
+
+Tested also with  cudnn-7.0-linux-x64-v4.0-rc and [MatConvNet v1.0-beta18](https://github.com/vlfeat/matconvnet/archive/v1.0-beta18.zip).
 
 ### Demo
 [Demo](#demo) shows the precision-recall curves of our methods and main baselines on HollywoodHeads dataset.
@@ -162,4 +166,59 @@ Alternatively, you can download the scores we used.
 Either way, you should be able to run 
   ```Matlab
   run_training_pairwiseModel
+  ```
+
+### Casablanca dataset
+[Casablanca dataset](#casablanca-dataset) explains how to reproduce our results on the Casablanca dataset.
+If you find the dataset useful in your research, please, cite the following papers:
+
+>@inproceedings{ren08casablanca,<br>
+    Author = {Ren, Xiaofeng},<br>
+    Title = {Finding People in Archive Films through Tracking},<br>
+    Booktitle = {Computer Vision and Pattern Recognition ({CVPR})},<br>
+    Year = {2008} }
+
+1) Download and unpack the Casablanca dataset
+  ```Shell
+  wget -P data http://www.di.ens.fr/willow/research/headdetection/release/Casablanca.zip
+  unzip data/Casablanca.zip -d data
+  ```
+
+2) Get the bounding-box proposals. If you want you can download ours computed with [Selective Search](http://disi.unitn.it/~uijlings/MyHomepage/index.php#page=projects1):
+  ```Shell
+  wget -P data/Casablanca http://www.di.ens.fr/willow/research/headdetection/release/candidates_Casablanca.zip
+  unzip data/Casablanca/candidates_Casablanca.zip -d data/Casablanca
+  ```
+
+3) Download and unpack the detection results
+  ```Shell
+  wget http://www.di.ens.fr/willow/research/headdetection/release/results_Casablanca.zip
+  unzip results_Casablanca.zip
+  ```
+
+4) Open MATLAB and run
+  ```Matlab
+  demo_Casablanca;
+  ```
+
+To recompute our detections on the Casablanca dataset you can do the following steps. You can skip steps 5 and 6 if you already run evaluation for the HollywoodHeads dataset.
+
+5) Download the models trained on the HollywoodHeads dataset and data for the pairwise clusters
+  ```Shell
+  wget http://www.di.ens.fr/willow/research/headdetection/release/models.zip
+  unzip models.zip
+  wget -P results/Casablanca/pairwise http://www.di.ens.fr/willow/research/headdetection/release/imdb_pairwise_precomputedClusters.mat
+  ```
+
+6) Compile the package and add the required paths. From MATLAB run
+  ```Matlab
+  compile_mex( CUDAROOT );
+  setup( MATCONVNETROOT );
+  ```
+
+7) From MATLAB run
+  ```Matlab
+  run_computeScores_localModel_Casablanca;
+  run_computeScores_globalModel_Casablanca;
+  run_computeScores_pairwiseModel_Casablanca;
   ```

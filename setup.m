@@ -24,6 +24,8 @@ addpath( fullfile(rootDir, 'utils') );
 addpath( fullfile(rootDir, 'utils', 'cropRectanglesMex') );
 addpath( fullfile(rootDir, 'utils', 'VOCcode') );
 addpath( fullfile(rootDir, 'utils', 'HollywoodHeads') );
+addpath( fullfile(rootDir, 'utils', 'Casablanca') );
+
 
 % code for the local model
 addpath( fullfile(rootDir, 'localModel') );

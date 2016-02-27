@@ -24,6 +24,9 @@ opts.numBoundingBoxMax = inf;
 opts.nmsIntersectionOverAreaThreshold = 0.3;
 opts = vl_argparse(opts, varargin);
 
+% if opts.nmsIntersectionOverAreaThreshold == inf the code will get into the infinite loop
+opts.nmsIntersectionOverAreaThreshold = min( opts.nmsIntersectionOverAreaThreshold, 100 );
+
 %% do the job
 numBbs = length(scores);
 [~, ids] = sort(scores, 'descend');
