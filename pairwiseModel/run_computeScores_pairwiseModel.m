@@ -114,6 +114,9 @@ batchWrapperEvaluation = @(imdb, batch) cnn_getBatch_pairwiseModel(imdb, batch, 
 if exist(resultFile, 'file')
     warning('The results file already exists. Overwriting!');
 end
+if ~exist(fileparts(resultFile), 'dir')
+    mkdir(fileparts(resultFile));
+end
 save( resultFile, 'scores', 'candidateIds', '-v7.3' );
 
 %% save detections to files

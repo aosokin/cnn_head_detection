@@ -88,6 +88,9 @@ scores = cnn_computeScores_globalModel( net, imdb, batchWrapperEvaluation, ...
     'batchSize', opts_cnn.batchSize, ...
     'scoreMode', opts_cnn.scoreMode);
 
+if ~exist(fileparts(resultFile), 'dir')
+    mkdir(fileparts(resultFile));
+end
 save( resultFile, 'scores', '-v7.3' );
 
 %% save detections for files

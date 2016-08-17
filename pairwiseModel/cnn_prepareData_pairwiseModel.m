@@ -84,16 +84,22 @@ parfor (iImage = 1 : numImages, opts.numThreads)
         fprintf( 'Image %d\n', iImage )
     end
     
-    annotation = VOCreadrecxml( fullfile( opts.dataPath, groundTruthFiles{iImage} ) );
-    if isfield(annotation, 'objects')
-        groundTruth{iImage} = nan( numel( annotation.objects ), 4 );
-        isDifficultGroundTruth{iImage} = false( numel( annotation.objects ), 1 );
+    annotation_file = fullfile( opts.dataPath, groundTruthFiles{iImage} );
+    have_annotation = false;
+    if exist( annotation_file, 'file')
+        annotation = VOCreadrecxml( annotation_file );
+        if isfield(annotation, 'objects')
+            have_annotation = true;
+            groundTruth{iImage} = nan( numel( annotation.objects ), 4 );
+            isDifficultGroundTruth{iImage} = false( numel( annotation.objects ), 1 );
         
-        for iGt = 1 : numel( annotation.objects )
-            groundTruth{iImage}(iGt, :) = annotation.objects(iGt).bbox; % bbox is in X1 Y1 X2 Y2 format
-            isDifficultGroundTruth{iImage}(iGt) = annotation.objects(iGt).difficult;
+            for iGt = 1 : numel( annotation.objects )
+                groundTruth{iImage}(iGt, :) = annotation.objects(iGt).bbox; % bbox is in X1 Y1 X2 Y2 format
+                isDifficultGroundTruth{iImage}(iGt) = annotation.objects(iGt).difficult;
+            end
         end
-    else
+    end
+    if ~have_annotation
         % there is no annotation for this image
         groundTruth{iImage} = nan( 0, 4 );
         isDifficultGroundTruth{iImage} = false( 0, 1 );
