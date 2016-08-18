@@ -27,7 +27,8 @@ If you find our code useful in your research, please, consider citing our paper:
 2. [Demo](#demo)
 3. [Evaluation](#evaluation)
 4. [Training](#training)
-4. [Casablanca dataset](#casablanca-dataset)
+5. [Casablanca dataset](#casablanca-dataset)
+6. [New images](#new-images)
 
 
 ### Requirements
@@ -222,3 +223,24 @@ To recompute our detections on the Casablanca dataset you can do the following s
   run_computeScores_globalModel_Casablanca;
   run_computeScores_pairwiseModel_Casablanca;
   ```
+
+### New images
+[This section](#new-images) explains how to try our models on the new images.
+
+1) Put the new images into `data/new_data` folder and organize the folder structure. As an example, you can a test image like this:
+  ```Shell
+  wget -P data/new_data/images http://tech.velmont.net/files/2009/04/lenna-lg.jpg
+  ```
+
+2) Install the [Selective Search](http://disi.unitn.it/~uijlings/MyHomepage/index.php#page=projects1). Get the package:
+  ```Shell
+  wget http://huppelen.nl/publications/SelectiveSearchCodeIJCV.zip
+  unzip SelectiveSearchCodeIJCV.zip
+  ```
+Open MATLAB and run their `demo.m' to make sure the code works.
+
+3) From MATLAB run
+  ```Matlab
+  demo_new_images;
+  ```
+to see the top scoring detection on the first provided image.
