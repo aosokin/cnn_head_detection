@@ -56,6 +56,14 @@ for iList = 1 : numel( fileLists )
         for iImage = 1 : numel( fileNames{iList} )
             globalImageCount = globalImageCount + 1;
             imageFiles{globalImageCount} = fullfile( opts.imageLocalPrefix, [fileNames{iList}{iImage}, '.jpeg'] );
+            if ~exist(fullfile(opts.dataPath, imageFiles{globalImageCount}), 'file')
+                % look for suitable files
+                suitable_files = dir(fullfile( opts.dataPath, opts.imageLocalPrefix, [fileNames{iList}{iImage}, '.*']));
+                if length(suitable_files) ~= 1
+                    error(['Suitable image file for ', fileNames{iList}{iImage}, ' was not identified'])
+                end
+                imageFiles{globalImageCount} = fullfile( opts.imageLocalPrefix, suitable_files(1).name );
+            end
             candidateFiles{globalImageCount} = fullfile( opts.candidateLocalPrefix, [fileNames{iList}{iImage}, '.mat'] );
             groundTruthFiles{globalImageCount} = fullfile( opts.groundTruthLocalPrefix, [fileNames{iList}{iImage}, '.xml'] );
         end
