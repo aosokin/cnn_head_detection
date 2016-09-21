@@ -219,7 +219,7 @@ end
 % save final model
 for i = 1 : length(net.layers)
     if isequal( net.layers{i}.type, 'conv' )
-        for j = 1 : length( net.layers{l}.weights )
+        for j = 1 : length( net.layers{i}.weights )
             net.layers{i}.weights{j} = single( gather( net.layers{i}.weights{j} ) );
         end
         net.layers{i} = rmfield( net.layers{i}, 'momentum' );
